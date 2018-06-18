@@ -1,0 +1,81 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>mini search filter</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <form class="search-form">
+    <input type="text" class="search" placeholder="City or State">
+    <ul class="suggestions">
+      <li>Filter for a city</li>
+      <li>or a state</li>
+    </ul>
+  </form>
+<script>
+const endpoint = 'https://gist.githubusercontent.com/Miserlou/c5cd8364bf9b2420bb29/raw/2bf258763cdddd704f8ffd3ea9a3e81d25e2c6f6/cities.json';
+
+const cities = [];
+
+fetch(endpoint)
+.then(blob => blob.json())
+.then(data => cities.push(...data))
+
+//filters through data, and finds what matches using the cities array from the fetch above
+function findMatches(wordToMatch, cities){
+  return cities.filter(place => {
+    //here we need to figure out if the city or state matches what was searched
+
+    //regex used so it searches globally, and insensitively
+    const regex = new RegExp(wordToMatch, 'gi')
+
+    //returns either the city, or state that matches (new gives new york, and new mexico etc)
+    return place.city.match(regex) || place.state.match(regex)
+  });
+}
+
+
+//function used to make population number have commas every 3 digits
+function numberWithCommas(x) {
+  return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+}
+
+
+//to display matches under the search 
+function displayMatches() {
+
+//runs find matches function to see its results, then use them to map through them in the html variable
+const matchArray = findMatches(this.value, cities) 
+const html = matchArray.map(place => {
+
+  //makes sure the city and state get highlighted, not just one or the other
+  const regex = new RegExp(this.value, 'gi')
+  const cityName = place.city.replace(regex, `<span class="hl">${this.value}</span>`)
+  const stateName = place.state.replace(regex, `<span class="hl">${this.value}</span>`)
+  return `
+    <li>
+      <span class="name">${cityName}, ${stateName}</span>
+      <span class="population">${numberWithCommas(place.population)}</span>
+    </li>
+  `
+  //joins the array
+}).join('')
+
+//makes the same
+suggestions.innerHTML = html
+
+
+}
+
+const searchInput = document.querySelector('.search')
+const suggestions = document.querySelector('.suggestions')
+
+searchInput.addEventListener('change', displayMatches)
+searchInput.addEventListener('keyup', displayMatches)
+
+</script>
+  </body>
+</html>
